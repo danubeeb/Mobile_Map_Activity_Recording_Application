@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- สิทธิ์ในการใช้ตำแหน่ง -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>เราใช้ตำแหน่งของคุณเพื่อแสดงแผนที่</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>เราใช้ตำแหน่งของคุณเพื่อแสดงแผนที่</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>เราใช้ตำแหน่งของคุณเพื่อแสดงแผนที่</string>
+	<!-- สิทธิ์ในการใช้การแจ้งเตือน -->
+    <key>NSUserNotificationUsageDescription</key>
+    <string>แอปนี้ต้องการสิทธิ์ในการส่งการแจ้งเตือน</string>
+	<!-- สิทธิ์ในการเข้าถึงรูปภาพ -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>เราใช้รูปภาพของคุณเพื่อเพิ่มลงในแอป</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>เราใช้สิทธิ์นี้เพื่อบันทึกรูปภาพลงในคลังรูปภาพของคุณ</string>
+    <!-- สิทธิ์ในการใช้กล้อง -->
+    <key>NSCameraUsageDescription</key>
+    <string>เราใช้กล้องเพื่อถ่ายภาพหรือวีดีโอ</string>
+    <!-- สิทธิ์ในการใช้เอกสาร -->
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>เราใช้เอกสารของคุณเพื่อจัดเก็บข้อมูล</string>
+    <!-- Background Modes (สำหรับ Location และ Fetch) -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>fetch</string>
+    </array>
+
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Application Map Todolist</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>application_map_todolist</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+</dict>
+</plist>
