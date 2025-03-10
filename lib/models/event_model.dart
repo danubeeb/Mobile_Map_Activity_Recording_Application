@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 @HiveType(typeId: 0)
@@ -19,15 +18,21 @@ class Event {
   final DateTime to;
 
   @HiveField(5)
-  final int backgroundColor;
+  final bool notiStart;
 
   @HiveField(6)
-  final String image;
+  final bool notiEnd;
 
   @HiveField(7)
-  final String markerId;
+  final int backgroundColor;
 
   @HiveField(8)
+  final String image;
+
+  @HiveField(9)
+  final String markerId;
+
+  @HiveField(10)
   final String typeId;
 
   Event({
@@ -36,39 +41,11 @@ class Event {
     required this.description,
     required this.from,
     required this.to,
+    required this.notiStart,
+    required this.notiEnd,
     required this.backgroundColor,
     required this.image,
     required this.markerId,
     required this.typeId,
   });
-
-   Color get _backgroundColor => Color(backgroundColor);
-
-    factory Event.fromJson(Map<String, dynamic> json) {
-    return Event(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      from: DateTime.parse(json['from']),
-      to: DateTime.parse(json['to']),
-      backgroundColor: json['backgroundColor'], //อ่านค่า int กลับมา 
-      image: json['image'],
-      markerId: json['markerId'],
-      typeId: json['typeId'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id':id,
-      'title': title,
-      'description': description,
-      'from': from.toIso8601String(),
-      'to': to.toIso8601String(),
-      'backgroundColor': _backgroundColor, //เก็บค่าสีในรูปแบบ int 
-      'image': image,
-      'markerId': markerId,
-      'typeId': typeId,
-    }; 
-  }
 }

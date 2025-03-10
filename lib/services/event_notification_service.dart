@@ -1,6 +1,6 @@
 
 import 'dart:io';
-import 'package:application_map_todolist/storage/storage.dart';
+import 'package:application_map_todolist/services/data_storage.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -16,7 +16,7 @@ class EventNotificationService {
     await _requestNotificationPermission();
     await _requestScheduleExactAlarmPermission();
     final initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('iconapp');
     final initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
     await flutterLocalNotificationsPlugin.initialize(
@@ -26,7 +26,18 @@ class EventNotificationService {
     );
   }
 
-  Future<void> scheduleNotification(int id, String title, String description, DateTime from, DateTime to, bool From, bool To) async {
+    // ฟังก์ชันสำหรับลบการแจ้งเตือนทั้งหมด
+  Future<void> cancelAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+
+      // ฟังก์ชันสำหรับลบการแจ้งเตือน
+  Future<void> deleteNotifications(String id) async {
+    await flutterLocalNotificationsPlugin.cancel(id.hashCode);
+  }
+
+  Future<void> scheduleNotification(int id, String title, String description, DateTime from, DateTime to, bool notiStart, bool notiEnd) async {
     bool onNotify = await EventStorage().loadSettingNotify();
     var androidDetails = AndroidNotificationDetails(
       'channelId',
@@ -40,7 +51,9 @@ class EventNotificationService {
         NotificationDetails(android: androidDetails);
     
     if(onNotify) {
-      if (From) {
+      await flutterLocalNotificationsPlugin.cancel(id);
+      final nowMinusOneDay = DateTime.now().subtract(Duration(days: 1));
+      if (notiStart && from.isAfter(nowMinusOneDay)) {
         await flutterLocalNotificationsPlugin.zonedSchedule(
           id,
           'กิจกรรม $title เริ่มต้นแล้ว!',
@@ -52,7 +65,8 @@ class EventNotificationService {
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
       }
-      if (To) {
+      await flutterLocalNotificationsPlugin.cancel(id+1);
+      if (notiEnd && from.isAfter(nowMinusOneDay)) {
         await flutterLocalNotificationsPlugin.zonedSchedule(
           id + 1,
           'กิจกรรม $title จบลงแล้ว!',

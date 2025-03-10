@@ -1,18 +1,20 @@
-import 'package:application_map_todolist/calendar/event_view.dart';
-import 'package:application_map_todolist/storage/hive_storage.dart';
+import 'package:application_map_todolist/screens/event_view_screen.dart';
+import 'package:application_map_todolist/models/event_model.dart';
+import 'package:application_map_todolist/models/marker_model.dart';
+import 'package:application_map_todolist/models/type_model.dart';
+import 'package:application_map_todolist/services/data_storage.dart';
 import 'package:application_map_todolist/units/mmfuntion.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:application_map_todolist/calendar/event_Editing.dart';
+import 'package:application_map_todolist/wiggets/event_Editing.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
-import 'package:application_map_todolist/calendar/event_provider.dart';
+import 'package:application_map_todolist/providers/event_provider.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
@@ -21,13 +23,17 @@ import 'package:flutter/services.dart' show rootBundle;
 class MyMap extends StatefulWidget {
   final int onNavigate;
   final String markerId;
-  MyMap({super.key, required this.onNavigate, this.markerId = ''});
+  MyMap({super.key, this.onNavigate = 0, this.markerId = ''});
   @override
   State<MyMap> createState() => MyGoogleMap();
 }
 
 class MyGoogleMap extends State<MyMap> {
+  final apiKey = 'AIzaSyDM_jiIQkI72-9w9APS5nDyT4WWKHzsq7E';
   late EventProvider provider;
+  List<Event> events = [];
+  List<Type> types = [];
+  List<String>? selectedType;
   Position? userLocation ;
   late GoogleMapController Mapcontroller ;
   Completer<GoogleMapController> MapcontrollerCompleter = Completer();
@@ -78,19 +84,22 @@ class MyGoogleMap extends State<MyMap> {
     });
   }
 
-  void _loadMarkersOnMap() async {
-    loadMarker(context);
-    setState(() {
-      whereMarker ;
-    });
+   Future<void> _loadMarkersOnMap() async {
+    final marker = await DataStorage().getMarkers();
+    await generateMarkers(marker);
     if(widget.onNavigate == 2) {
       updateWhereMarker(widget.markerId);
     }
   }
 
-  void loadMarker(BuildContext context) async {
-  final markerList = await DataStorage().getMarkers();
-  for (var markerData in markerList) {
+  Future<void> generateMarkers(List<MarkerEvent> markers) async {
+    Set<Marker> newMarker = {};
+    for (var markerData in markers) {
+      
+      if (selectedType != null && !selectedType!.contains(markerData.markerId)) {
+        continue; // ข้ามถ้า markerId ไม่อยู่ใน selectedType
+      }
+
       Position positionload = Position(
         latitude: markerData.lat,
         longitude: markerData.lng,
@@ -111,14 +120,16 @@ class MyGoogleMap extends State<MyMap> {
           title: '🔴',
         ),
         onTap: () {
-          onMenuMaker(context, markerData.markerId, positionload, 'Old');
+          onMenuMaker(markerData.markerId, positionload, 'Old');
         }
       );
-      setState(() {
-        _markers.add(marker);  
-      });
+      newMarker.add(marker);
+    }
+    setState(() {
+      _markers.clear();
+      _markers.addAll(newMarker);
+    });
   }
-}
 
 
   void addCustomMarker(Position position, String markerId) async {
@@ -128,7 +139,7 @@ class MyGoogleMap extends State<MyMap> {
       position: LatLng(position.latitude, position.longitude),
       icon: BitmapDescriptor.fromBytes(markerIcon),
       onTap: () {
-        onMenuMaker(context, markerId, position, 'Old');
+        onMenuMaker(markerId, position, 'Old');
       }
     );
     setState(() {
@@ -165,6 +176,7 @@ class MyGoogleMap extends State<MyMap> {
     final int markerId = DateTime.now().millisecondsSinceEpoch % 100000000;
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         int selectedIndex = 0; // ตัวแปรสำหรับติดตามแท็บที่เลือก
         final tabController = PageController(initialPage: selectedIndex);
@@ -255,9 +267,9 @@ class MyGoogleMap extends State<MyMap> {
                                       ),
                                     ),
                                   );
-                                  if(isClose == 'close') {
+                                  if(isClose != 'save') {
                                     await _deleteMarker(markerId.toString());
-                                    _loadMarkersOnMap();
+                                    await _loadMarkersOnMap();
                                   }
                                 }
                                 image = '';
@@ -324,7 +336,6 @@ class MyGoogleMap extends State<MyMap> {
       }
       LocationSettings locationSettings = LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
       );
       userLocation = await Geolocator.getCurrentPosition(locationSettings: locationSettings,);
     } catch (e) {
@@ -339,7 +350,6 @@ class MyGoogleMap extends State<MyMap> {
   }
 
  void _onTap(LatLng position) {
-    final String markerId = '1';
     Position positionGO = Position(
       latitude: position.latitude,
       longitude: position.longitude,
@@ -356,10 +366,10 @@ class MyGoogleMap extends State<MyMap> {
       polylines.clear();
       _markers.add(
         Marker(
-          markerId: MarkerId(markerId),
+          markerId: MarkerId('1'),
           position: LatLng(position.latitude, position.longitude),
             onTap: () {
-              onMenuMaker(context, markerId, positionGO, 'New');
+              onMenuMaker('1', positionGO, 'New');
             },
         ),
       );
@@ -368,7 +378,7 @@ class MyGoogleMap extends State<MyMap> {
 
   Future<void> _getPolyline(Position endLocation) async {
     final String url =
-      'https://maps.googleapis.com/maps/api/directions/json?origin=${userLocation!.latitude},${userLocation!.longitude}&destination=${endLocation.latitude},${endLocation.longitude}&key=AIzaSyDM_jiIQkI72-9w9APS5nDyT4WWKHzsq7E';
+      'https://maps.googleapis.com/maps/api/directions/json?origin=${userLocation!.latitude},${userLocation!.longitude}&destination=${endLocation.latitude},${endLocation.longitude}&key=$apiKey';
     final response =await http.get(Uri.parse(url));
     if(response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -394,25 +404,32 @@ class MyGoogleMap extends State<MyMap> {
     }
   }
 
-  void _searchPlace() async {
+  Future<void> _searchPlace() async {
+    final query = Uri.encodeComponent(_searchController.text);
+    final url = "https://maps.googleapis.com/maps/api/geocode/json?address=$query&key=$apiKey";
     try {
-      List<Location> locations = await locationFromAddress(_searchController.text);
-      if(locations.isNotEmpty) {
-        final location = locations.first;
+      final response = await http.get(Uri.parse(url));
+      final data = json.decode(response.body);
+
+      if (data["status"] == "OK") {
+        final location = data["results"][0]["geometry"]["location"];
+        final lat = location["lat"];
+        final lng = location["lng"];
+
         setState(() {
           Mapcontroller.animateCamera(
-          CameraUpdate.newLatLngZoom(LatLng(location.latitude, location.longitude), 18),
+            CameraUpdate.newLatLngZoom(LatLng(lat, lng), 18),
           );
         });
-      } else{
-        print('ไม่มีตำเเหน่งที่ค้นหา');
+      } else {
+        print('ไม่พบตำแหน่ง');
       }
     } catch (e) {
       print('ข้อผิดพลาด: $e');
     }
   }
 
-  void onMenuMaker(BuildContext context,String markerId, Position position, String markerNewOrOld) {
+  void onMenuMaker(String markerId, Position position, String markerNewOrOld) {
     _markers.removeWhere((marker) => marker.markerId.value == '1');
     showDialog(
       context: context,
@@ -523,6 +540,8 @@ class MyGoogleMap extends State<MyMap> {
 
   @override
   Widget build(BuildContext context) {
+    events = Provider.of<EventProvider>(context).events;
+    types = Provider.of<EventProvider>(context).types;
     return Scaffold(
       body: FutureBuilder(
         future: getlocation(),
@@ -553,6 +572,7 @@ class MyGoogleMap extends State<MyMap> {
                   onTap: _onTap,
                   polylines: polylines,
                 ),
+                buildTypeSelectionButton(),
                 buildUserlocationButton(),
                 buildSearchtab(),
               ],
@@ -567,6 +587,64 @@ class MyGoogleMap extends State<MyMap> {
           }
         }
       ),
+    );
+  }
+
+  // แสดง Dialog ให้ผู้ใช้เลือกประเภทกิจกรรม
+  Future<List<String>?> _showTypeSelectionDialog(List<Event> events, List<Type> types) async {
+    return await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('ประเภทกิจกรรม', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              children: types
+                  .map(
+                    (type) => ListTile(
+                      title: Text(type.name), // เปลี่ยนให้ตรงกับชื่อ field
+                      onTap: () {
+                      // กรอง events ที่มี typeId ตรงกับที่เลือก
+                      List<String> matchingEventIds = events
+                          .where((event) => event.typeId == type.typeId)
+                          .map((event) => event.id)
+                          .toList();
+                      
+                      // ส่งค่า event.id ที่ตรงออกไป
+                      Navigator.of(context).pop(matchingEventIds);
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'รีเซ็ต',
+                    style: TextStyle(color: const Color.fromARGB(255, 77, 169, 137), fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                CloseButton(color: const Color.fromARGB(255, 98, 197, 162)),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -608,6 +686,33 @@ class MyGoogleMap extends State<MyMap> {
           Icons.my_location,
           color: Colors.white,
           size: 25,
+        ),
+      ),
+    ),
+  );
+
+  Widget buildTypeSelectionButton() => Positioned(
+    top: MediaQuery.of(context).size.height * 0.12,
+    right: MediaQuery.of(context).size.width * 0.02,
+    child: Container(
+      width: 40,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 98, 197, 162),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        onPressed: () async { 
+          final selected = await _showTypeSelectionDialog(events, types);
+          if(selectedType != selected)
+            setState(() {
+              selectedType = selected;
+              _loadMarkersOnMap();
+          });
+        },
+        icon: Icon(
+          Icons.filter_alt,
+          color: Colors.white,
+          size: 23,
         ),
       ),
     ),

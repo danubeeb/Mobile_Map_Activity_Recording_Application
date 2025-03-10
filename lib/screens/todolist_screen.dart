@@ -1,6 +1,6 @@
 
-import 'package:application_map_todolist/calendar/event_provider.dart';
-import 'package:application_map_todolist/calendar/event_view.dart';
+import 'package:application_map_todolist/providers/event_provider.dart';
+import 'package:application_map_todolist/screens/event_view_screen.dart';
 import 'package:application_map_todolist/models/type_model.dart';
 import 'package:application_map_todolist/units/mmfuntion.dart';
 import 'package:flutter/material.dart';
@@ -125,11 +125,9 @@ class _EventsPageState extends State<ListEvents> with SingleTickerProviderStateM
           onPressed: () async {
             typeEvent = provider.types;
             final selected = await _showTypeSelectionDialog(context);
-            setState(() {
               setState(() {
                 selectedType = selected == 'รีเซ็ต' ? null : selected;
               });
-            });
           },
           child: Icon(Icons.filter_alt, color: const Color.fromARGB(255, 241, 221, 152),),
           backgroundColor: const Color.fromARGB(255, 147, 101, 37),
@@ -184,7 +182,7 @@ class _EventsPageState extends State<ListEvents> with SingleTickerProviderStateM
           ),
         ),
         Align(
-  alignment: Alignment(-0.35, -0.3),
+  alignment: Alignment(-0.4, -0.3),
   child:
         Container(
           width: 200,

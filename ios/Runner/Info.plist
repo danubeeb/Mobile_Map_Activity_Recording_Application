@@ -2,6 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
+	<key>GMSApiKey</key>
+	<string>AIzaSyDM_jiIQkI72-9w9APS5nDyT4WWKHzsq7E</string>
     <!-- สิทธิ์ในการใช้ตำแหน่ง -->
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>เราใช้ตำแหน่งของคุณเพื่อแสดงแผนที่</string>

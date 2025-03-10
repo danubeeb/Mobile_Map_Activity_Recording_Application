@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart' ;
 import 'package:flutter/material.dart' ;
 import 'package:flutter/widgets.dart' ;
-import 'package:application_map_todolist/calendar/event_provider.dart';
+import 'package:application_map_todolist/providers/event_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:application_map_todolist/models/event_model.dart';
 import 'package:application_map_todolist/models/type_model.dart';
-import 'utils.dart' ;
+import '../units/utils.dart' ;
 
 class EventEditing extends StatefulWidget {
   const EventEditing({super.key, this.event, required this.image, required this.markerId});
@@ -26,8 +26,8 @@ class _EventEditingState extends State<EventEditing> {
   late DateTime toDate ;
   late Color colorEvent = const Color.fromARGB(255, 165, 229, 217) ;
 
-  bool From = true;
-  bool To = false;
+  bool notiStart = true;
+  bool notiEnd = false;
 
   List<Type> typeEvent = [];
 
@@ -37,11 +37,9 @@ class _EventEditingState extends State<EventEditing> {
   @override
   void initState()  {
     super.initState() ;
-    provider = Provider.of<EventProvider>(context, listen: false);
     _descriptionController = TextEditingController(
         text: widget.event?.description ?? '',
       );
-    loadtypes();
     if (widget.event == null) {
       fromDate = DateTime.now() ;
       toDate = DateTime.now().add(Duration(hours : 1)) ;
@@ -50,8 +48,12 @@ class _EventEditingState extends State<EventEditing> {
       titleController.text = event.title ;
       fromDate = event.from ;
       toDate = event.to ;
+      notiStart = event.notiStart;
+      notiEnd = event.notiEnd;
       _descriptionController = TextEditingController(text: widget.event?.description ?? '');
       colorEvent = Color(event.backgroundColor);
+      final provided =Provider.of<EventProvider>(context, listen: false);
+      selectedType = provided.getTypeById(widget.event!.typeId);
     }
   }
 
@@ -69,9 +71,6 @@ class _EventEditingState extends State<EventEditing> {
         Type(typeId: '0', name: 'ทั่วไป', duration: ''),
         ...typeEvents,
       ];
-      if(widget.event != null) {
-        selectedType = provider.getTypeById(widget.event!.typeId);
-      }
     });
   }
 
@@ -110,6 +109,7 @@ class _EventEditingState extends State<EventEditing> {
       ),
     );
   }
+
   List<Widget> buildEditingActions() => [
     IconButton(
       onPressed: saveFrom,
@@ -211,10 +211,10 @@ class _EventEditingState extends State<EventEditing> {
               flex: 1,
               child:  Switch(
                 activeColor: const Color.fromARGB(255, 98, 197, 162),
-                value: From,
+                value: notiStart,
                 onChanged: (bool value) {
                   setState(() {
-                    From = value;
+                    notiStart = value;
                   });
                 },
               ),
@@ -223,10 +223,10 @@ class _EventEditingState extends State<EventEditing> {
               flex: 1,
               child:  Switch(
                 activeColor: const Color.fromARGB(255, 98, 197, 162),
-                value: To,
+                value: notiEnd,
                 onChanged: (bool value) {
                   setState(() {
-                    To = value;
+                    notiEnd = value;
                   });
                 },
               ),
@@ -311,25 +311,22 @@ class _EventEditingState extends State<EventEditing> {
   Future<void> saveFrom() async {
     final isValid = _formKey.currentState!.validate();
     if(isValid) {
-        final event = Event(
-          id: widget.markerId,
-          title: titleController.text,
-          description: _descriptionController.text,
-          from: fromDate,
-          to: toDate,
-          backgroundColor: colorEvent.value,
-          image: widget.image,
-          markerId: widget.markerId,
-          typeId: selectedType == null ? '0' : selectedType!.typeId,
-        );
-        final isEditing = widget.event != null ;
-        if (isEditing) {
-          await provider.editEvent(event) ;
-        } else {
-          provider.addEvent(event, From, To);
-        }
-        Navigator.of(context).pop('save');
-   }
+      final event = Event(
+        id: widget.markerId,
+        title: titleController.text,
+        description: _descriptionController.text,
+        from: fromDate,
+        to: toDate,
+        notiStart: notiStart,
+        notiEnd: notiEnd,
+        backgroundColor: colorEvent.value,
+        image: widget.image,
+        markerId: widget.markerId,
+        typeId: selectedType == null ? '0' : selectedType!.typeId,
+      );
+      provider.addEvent(event);
+      Navigator.of(context).pop('save');
+    }
  }
 
 
@@ -358,6 +355,8 @@ List<String> timeTypes = [
 ];
 
 Widget buildActivityTypeButton(BuildContext context) {
+  provider = Provider.of<EventProvider>(context);
+  loadtypes();
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -427,8 +426,7 @@ void _confirmDelete(Type type) {
               IconButton(
                 icon: Icon(Icons.done, color: const Color.fromARGB(255, 98, 197, 162)),
                 onPressed: () async {
-                  provider.deleteType(type.typeId);
-                  provider.loadEvents();
+                  await provider.deleteType(type.typeId);
                   if(selectedType != type){
                     setState(() {
                       typeEvent.remove(type);
@@ -460,57 +458,78 @@ void _showTypeEventDialog(BuildContext context) {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(width: 90),
-            Text('ประเภท', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
+            const Text(
+              'ประเภท',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             const SizedBox(width: 50),
             Container(
-            height: 33,
-            width: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: const Color.fromARGB(255, 98, 197, 162),
+              height: 33,
+              width: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: const Color.fromARGB(255, 98, 197, 162),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  showAddActivityTypeDialog(context);
+                },
+                icon: const Icon(Icons.add, color: Colors.white, size: 20),
+              ),
             ),
-            child: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-                showAddActivityTypeDialog(context);
-              },
-              icon: Icon(Icons.add, color: Colors.white, size: 20,),
-            ),
-          ),
           ],
         ),
-        content: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
-          children: typeEvent.map((type) {
-            return ListTile(
-              title: Text(type.name),
-              subtitle: (type.name != 'ทั่วไป')
-                ? Text(type.duration, style: TextStyle(color: Colors.grey))
-                : null,
-              trailing: (type.name != 'ทั่วไป')
-                ? IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      Navigator.pop(context); // ปิด Dialog
-                      _confirmDelete(type); // เรียกฟังก์ชันลบ
-                    },
-                  )
-                : null,
-              onTap: () {
-                setState(() {
-                  selectedType = type;
-                  toDate = addDuration(DateTime.now(), selectedType!.duration);
-                });
-                Navigator.of(context).pop(); // ปิด Dialog หลังจากเลือก
-              },
-            );
-          }).toList(),
+        content: SizedBox(
+          width: double.maxFinite, // ให้ขยายความกว้างเท่าที่เป็นไปได้
+          height: 300, // กำหนดความสูงให้พอเหมาะ สามารถเปลี่ยนค่าตามต้องการ
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: typeEvent.map((type) {
+                return ListTile(
+                  title: Text(type.name),
+                  subtitle: (type.name != 'ทั่วไป')
+                      ? Text(type.duration, style: const TextStyle(color: Colors.grey))
+                      : null,
+                  trailing: (type.name != 'ทั่วไป')
+                      ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit, color: const Color.fromARGB(255, 98, 197, 162),),
+                              onPressed: () {
+                                Navigator.pop(context); // ปิด Dialog
+                                showAddActivityTypeDialog(context, type: type);
+                              }
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                Navigator.pop(context); // ปิด Dialog
+                                _confirmDelete(type); // เรียกฟังก์ชันลบ
+                              },
+                            )
+                          ],
+                        )
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      selectedType = type;
+                      toDate = addDuration(DateTime.now(), selectedType!.duration);
+                    });
+                    Navigator.of(context).pop(); // ปิด Dialog หลังจากเลือก
+                  },
+                );
+              }).toList(),
+            ),
+          ),
         ),
       );
     },
   );
 }
+
 
 
 DateTime addDuration(DateTime date, String duration) {
@@ -555,10 +574,15 @@ DateTime addDuration(DateTime date, String duration) {
 }
 
 
-void showAddActivityTypeDialog(BuildContext context) {
+void showAddActivityTypeDialog(BuildContext context, {Type? type}) {
   final int typeId = DateTime.now().millisecondsSinceEpoch % 100000000;
   final nameController = TextEditingController();
-  String? selectedDuration;
+  final typeName = type?.name;
+  if (selectedType != null && typeName != null) {
+    nameController.text = typeName.trim();
+  }
+
+  String? selectedDuration  = type?.duration;
   showDialog(
     context: context,
     builder: (context) => Dialog(
@@ -575,7 +599,7 @@ void showAddActivityTypeDialog(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'สร้างประเภทกิจกรรม',
+              type == null ? 'สร้างประเภทกิจกรรม' : 'แก้ไขประเภทกิจกรรม',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
@@ -583,7 +607,7 @@ void showAddActivityTypeDialog(BuildContext context) {
               decoration: InputDecoration(
               filled: true, // เติมสีพื้นหลังในช่องกรอก
               fillColor: Colors.white, // สีพื้นหลังของช่องกรอก
-              hintText: 'ชื่อ',
+              hintText: type == null ? 'ชื่อ' : 'ชื่อใหม่',
               border: OutlineInputBorder( // ใช้ OutlineInputBorder เพื่อให้มีกรอบล้อมรอบ
                 borderRadius: BorderRadius.circular(12), // กำหนดให้กรอบมน
                 borderSide: BorderSide.none, // ไม่มีขีดเส้นที่กรอก
@@ -624,7 +648,42 @@ void showAddActivityTypeDialog(BuildContext context) {
                   onPressed: () async {
                     final name = nameController.text.trim();
                     if (name.isNotEmpty && selectedDuration != null) {
-                      provider.addType(Type(typeId: typeId.toString(), name: name, duration: selectedDuration!));
+                      final newType =  Type(
+                        typeId: type == null ? typeId.toString() : type.typeId,
+                        name: name, 
+                        duration: selectedDuration!
+                      );
+                      final newDuration = addDuration(DateTime.now(), newType.duration);
+                      provider.addType(newType);
+                      if(selectedType?.typeId == newType.typeId){
+                        setState(() {
+                          selectedType = newType;
+                          toDate = newDuration;
+                        });
+                        List<Event> updatedEvents = provider.events.map((event) {
+                          if (event.typeId == newType.typeId) {
+                            return  Event(
+                              id: event.id,
+                              title: event.title,
+                              description: event.description,
+                              from: event.from,
+                              to: newDuration,
+                              notiStart: event.notiStart,
+                              notiEnd: event.notiEnd,
+                              backgroundColor: event.backgroundColor,
+                              image: event.image,
+                              markerId: event.markerId,
+                              typeId: event.typeId,
+                            );
+                          }
+                          return event;
+                        }).toList();
+
+                        // บันทึกค่าใหม่เข้า Provider
+                        for (var event in updatedEvents) {
+                          provider.addEvent(event);
+                        }
+                      }
                       loadtypes();
                       Navigator.pop(context);
                     }

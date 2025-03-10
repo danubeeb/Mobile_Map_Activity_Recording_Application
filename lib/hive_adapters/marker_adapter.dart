@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 class MarkerEventAdapter extends TypeAdapter<MarkerEvent> {
   @override
-  final int typeId = 1; // typeId ต้องไม่ซ้ำกับ Adapter อื่น
+  final int typeId = 1;
 
   @override
   MarkerEvent read(BinaryReader reader) {

@@ -1,9 +1,11 @@
-import 'package:application_map_todolist/calendar/task_widget.dart';
-import 'package:application_map_todolist/screens/calender.dart';
-import 'package:application_map_todolist/screens/map.dart';
-import 'package:application_map_todolist/screens/setting.dart';
-import 'package:application_map_todolist/screens/todolist.dart';
+import 'package:application_map_todolist/wiggets/task_widget.dart';
+import 'package:application_map_todolist/screens/calender_screen.dart';
+import 'package:application_map_todolist/screens/map_screen.dart';
+import 'package:application_map_todolist/screens/setting_screen.dart';
+import 'package:application_map_todolist/screens/todolist_screen.dart';
+import 'package:application_map_todolist/units/dialog_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   final int onNavigate;
@@ -15,18 +17,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  int bottom = 0;
+  int navigate = 0;
 
   @override
   void initState() {
     super.initState();
+    _checkFirstTimeOpen();
     if(widget.onNavigate == 2){
-      bottom = 2;
+      navigate = 2;
     }
   }
 
+  Future<void> _checkFirstTimeOpen() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isFirstTime = prefs.getBool('isFirstTime') ?? true;
+
+  if (isFirstTime) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DialogHelper.showHowToUseAppDialog(context);
+    });
+    await prefs.setBool('isFirstTime', false);
+  }
+}
+
   List<Widget> get _pages => [
-        MyMap(onNavigate: bottom, markerId: widget.markerId),
+        MyMap(onNavigate: navigate, markerId: widget.markerId),
         ListEvents(),
         Placeholder(),
         CalendarApp(),
@@ -36,8 +51,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      if(bottom == 1){
-        bottom = 0 ;
+      if(navigate == 1 || navigate == 2){
+        navigate = 0 ;
       }
     });
   }
@@ -107,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 setState(() {
                   if(_selectedIndex != 0) {
                     _selectedIndex = 0;
-                    bottom = 1;
+                    navigate = 1;
                   } else {
                     showDialog(
                       context: context,

@@ -4,7 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 class EventAdapter extends TypeAdapter<Event> {
   @override
-  final typeId = 0; // เลขประจำตัวประเภท (unique)
+  final typeId = 0;
 
   @override
   Event read(BinaryReader reader) {
@@ -17,6 +17,9 @@ class EventAdapter extends TypeAdapter<Event> {
     final from = DateTime.fromMillisecondsSinceEpoch(fromTimestamp);
     final to = DateTime.fromMillisecondsSinceEpoch(toTimestamp);
 
+    final notiStart = reader.readBool();
+    final notiEnd = reader.readBool();
+
     final backgroundColor = reader.readInt();
     final image = reader.readString();
     final markerId = reader.readString();
@@ -28,6 +31,8 @@ class EventAdapter extends TypeAdapter<Event> {
       description: description,
       from: from,
       to: to,
+      notiStart: notiStart,
+      notiEnd: notiEnd,
       backgroundColor: backgroundColor,
       image: image,
       markerId: markerId,
@@ -42,21 +47,11 @@ class EventAdapter extends TypeAdapter<Event> {
     writer.writeString(obj.description);
     writer.writeInt(obj.from.millisecondsSinceEpoch);
     writer.writeInt(obj.to.millisecondsSinceEpoch);
-    writer.writeInt(obj.backgroundColor); // ใช้ writeInt สำหรับ int
+    writer.writeBool(obj.notiStart);
+    writer.writeBool(obj.notiEnd);
+    writer.writeInt(obj.backgroundColor);
     writer.writeString(obj.image);
     writer.writeString(obj.markerId);
     writer.writeString(obj.typeId);
   }
-}
-
-void main() async {
-  // เริ่มต้น Hive และลงทะเบียน Adapter
-  await Hive.initFlutter(); // เริ่มต้น Hive สำหรับ Flutter
-  Hive.registerAdapter(EventAdapter());
-
-  // ใช้งาน Hive ในการเก็บข้อมูล
-  var box = await Hive.openBox<Event>('eventsBox');
-
-  // ดึงข้อมูล
-  print(box.values);
 }

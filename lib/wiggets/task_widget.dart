@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:application_map_todolist/calendar/event_provider.dart';
+import 'package:application_map_todolist/providers/event_provider.dart';
 import 'package:application_map_todolist/models/event_model.dart';
-import 'package:application_map_todolist/calendar/event_data_source.dart';
+import 'package:application_map_todolist/models/event_data_source.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
-import 'package:application_map_todolist/calendar/event_view.dart';
+import 'package:application_map_todolist/screens/event_view_screen.dart';
 
 class TasksWidget extends StatefulWidget {
   final bool taskToday ;
@@ -62,7 +61,7 @@ class _TasksWidgetState extends State<TasksWidget> {
         cellBorderColor: const Color.fromARGB(255, 234, 210, 132),
         todayHighlightColor: const Color.fromARGB(255, 147, 101, 37),
         dataSource: EventDataSource(provider.events),
-        initialDisplayDate:provider.selectedDate ,
+        initialDisplayDate: widget.taskToday ? DateTime.now() : provider.selectedDate ,
         appointmentBuilder: appointmentBuilder ,
         headerHeight: 0,
         onTap: (details) {

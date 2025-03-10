@@ -4,7 +4,7 @@ class Utils {
 
 static String toDateTime(DateTime date) {
   final thaiLocale = 'th';
-  final dateFormatDate = DateFormat('EEE MMM yyyy', thaiLocale);
+  final dateFormatDate = DateFormat('EEE dd MMM yyyy', thaiLocale);
   final dateFormatTime = DateFormat('เวลา: HH:mm', thaiLocale);
   return '${dateFormatDate.format(date)}\n${dateFormatTime.format(date)}';
 }

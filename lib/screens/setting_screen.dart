@@ -1,9 +1,11 @@
-import 'package:application_map_todolist/calendar/event_provider.dart';
-import 'package:application_map_todolist/screens/pin_screens/createpin.dart';
+import 'package:application_map_todolist/services/data_storage.dart';
+import 'package:application_map_todolist/services/event_notification_service.dart';
+import 'package:application_map_todolist/providers/event_provider.dart';
+import 'package:application_map_todolist/screens/pin_screens/createpin_screen.dart';
+import 'package:application_map_todolist/services/event_data_service.dart';
 import 'package:application_map_todolist/units/mmfuntion.dart';
 import 'package:flutter/material.dart';
-import 'package:application_map_todolist/data/upload_icon.dart';
-import 'package:application_map_todolist/storage/storage.dart';
+import 'package:application_map_todolist/services/pick_image.dart';
 import 'package:provider/provider.dart';
 
 
@@ -18,6 +20,7 @@ class _SettingsState extends State<Settings> {
   List<String> imageList = [];
   bool switchPin = false;
   bool switchNotify = true;
+  Set<int> selectedIndices = {}; // เก็บดัชนีรูปภาพที่ถูกเลือก
 
    @override
   void initState() {
@@ -105,44 +108,41 @@ class _SettingsState extends State<Settings> {
     );
   }
 
-    Set<int> selectedIndices = {}; // เก็บดัชนีรูปภาพที่ถูกเลือก
-
-
-void openPage(int page) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setState) {
-          return Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios, color: const Color.fromARGB(255, 98, 197, 162),),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+  void openPage(int page) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Scaffold(
+              appBar: AppBar(
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back_ios, color: const Color.fromARGB(255, 98, 197, 162),),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                title: Text(
+                  page == 0 ? 'จัดการข้อมูลกิจกรรม' :
+                  page == 1 ? 'จัดการรูปภาพ' :
+                  page == 2 ? 'ความปลอดภัย' :
+                  page == 3 ? 'การแจ้งเตือน' :
+                  page == 4 ? 'วิธีการใช้งาน' : 'แชร์'
+                ),
               ),
-              title: Text(
-                page == 0 ? 'จัดการข้อมูลกิจกรรม' :
-                page == 1 ? 'จัดการรูปภาพ' :
-                page == 2 ? 'ความปลอดภัย' :
-                page == 3 ? 'การแจ้งเตือน' :
-                page == 4 ? 'วิธีการใช้งาน' : 'แชร์'
-              ),
-            ),
-            body: page == 0 
-              ? buildPage0()
-              : page == 1 
+              body: page == 0 
+                ? buildPage0()
+                : page == 1 
                 ? buildPage1(context, setState)
-              : page == 2 
+                : page == 2 
                 ? buildPage2(context, setState) 
-              : page == 3 
+                : page == 3 
                 ? buildPage3(context, setState) 
-              : page == 4 
-              ? buildPage4()
-              : Center(
-                child: Text('รอทำเสร็จเเล้ว เเปะ Qr apk แอปทีเดียวครับ'),
-              ),
+                : page == 4 
+                ? buildPage4()
+                : Center(
+                  child: Text('รอทำเสร็จเเล้ว เเปะ Qr apk แอปทีเดียวครับ'),
+                ),
             );
           }
         );
@@ -159,14 +159,14 @@ void openPage(int page) {
         children: [
           firstTabMenu(
             onPressed: () async {
-              await provider.downloadEventsData(context);
+              await downloadEventsData(context);
             },
             textTabmMenu: 'ดาวน์โหลดไฟล์ข้อมูลกิจกรรม (.json)',
             imageTabMenu: 'assets/setting/file.png',
           ),
           lastTabMenu(
             onPressed: () async {
-              await provider.uploadEventsData(context);
+              await provider.importFile(context);
             },
             textTabmMenu: 'อัปโหลดข้อมูลกิจกกรม',
             imageTabMenu: 'assets/setting/upload-file.png',
@@ -313,7 +313,7 @@ void openPage(int page) {
                   width: 220,
                   child: TextButton.icon(
                     onPressed: () async {
-                      await UploadIcon().pickImage(context, imageList);
+                      await pickImage(context, imageList);
                     },
                     icon: Image.asset('assets/addimage.png'),
                     label: Text('เพิ่มรูปภาพ', style: TextStyle(color: Colors.black, fontSize: 15),),
@@ -436,11 +436,23 @@ void openPage(int page) {
           const SizedBox(height: 20),
           tabMenuTextAndSwitch(
             onChanged: (bool value) {
-              setState(() {
-                switchNotify = value;
-                EventStorage().saveSettingNotify(switchNotify);
-              });
-            },
+            setState(() {
+              switchNotify = value;
+              EventStorage().saveSettingNotify(switchNotify);
+              if (switchNotify) {
+                final events = provider.events;
+                for (var event in events) {
+                  notificationService.scheduleNotification(
+                    event.to.hashCode, event.title, event.description,
+                    event.from, event.to, event.notiStart, event.notiEnd
+                  );
+                }
+              } else {
+                // ปิดแจ้งเตือนทั้งหมด
+                notificationService.cancelAllNotifications();
+              }
+            });
+          },
             textTabmMenu: 'การเเจ้งเตือน',
             switchValue: switchNotify
           ),

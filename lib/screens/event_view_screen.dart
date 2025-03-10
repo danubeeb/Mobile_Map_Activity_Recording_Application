@@ -2,12 +2,12 @@
 import 'package:application_map_todolist/screens/home_screen.dart';
 import 'package:application_map_todolist/units/mmfuntion.dart';
 import 'package:flutter/material.dart';
-import 'package:application_map_todolist/calendar/event_Editing.dart';
+import 'package:application_map_todolist/wiggets/event_Editing.dart';
 import 'package:application_map_todolist/models/event_model.dart';
 import 'package:application_map_todolist/models/type_model.dart';
 import 'package:provider/provider.dart';
-import 'package:application_map_todolist/calendar/event_provider.dart';
-import 'package:application_map_todolist/calendar/utils.dart';
+import 'package:application_map_todolist/providers/event_provider.dart';
+import 'package:application_map_todolist/units/utils.dart';
 
 class EventViewing extends StatefulWidget {
   const EventViewing({super.key, required this.events});
@@ -117,9 +117,7 @@ class _EventViewingState extends State<EventViewing> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 buildDate(event.from),
-                const SizedBox(width: 10),
                 Icon(Icons.keyboard_arrow_right, size: 50, color: const Color.fromARGB(255, 147, 101, 37),),
-                const SizedBox(width: 8),
                 buildDate(event.to),
               ],
             ),
@@ -135,7 +133,7 @@ class _EventViewingState extends State<EventViewing> {
         children: [
           Text(
             Utils.toDateTime(date),
-            style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
           ),
         ],
       ),

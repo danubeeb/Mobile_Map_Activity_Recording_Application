@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:application_map_todolist/calendar/event_data_source.dart';
-import 'package:application_map_todolist/calendar/event_provider.dart';
+import 'package:application_map_todolist/models/event_data_source.dart';
+import 'package:application_map_todolist/providers/event_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-import 'package:application_map_todolist/calendar/task_widget.dart';
+import 'package:application_map_todolist/wiggets/task_widget.dart';
 
 class CalendarApp extends StatefulWidget {
   const CalendarApp({super.key});
@@ -57,7 +57,7 @@ class _CalendarAppState extends State<CalendarApp> {
               cellBorderColor: const Color.fromARGB(255, 234, 210, 132),
               todayHighlightColor: const Color.fromARGB(255, 147, 101, 37),
               todayTextStyle: TextStyle(fontWeight: FontWeight.bold),
-              onLongPress: (details) {
+              onTap: (details) {
                 final provider = Provider.of<EventProvider>(context, listen: false);
                 provider.setDate(details.date!);
                 showDialog(

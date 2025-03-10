@@ -1,8 +1,6 @@
 import 'package:hive/hive.dart';
 
-//part 'marker_model.g.dart'; // ใช้สำหรับสร้างไฟล์ adapter อัตโนมัติ
-
-@HiveType(typeId: 1) // กำหนด typeId ให้ไม่ซ้ำกับ EventAdapter
+@HiveType(typeId: 1)
 class MarkerEvent extends HiveObject {
   @HiveField(0)
   final String markerId;

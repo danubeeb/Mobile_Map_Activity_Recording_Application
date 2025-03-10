@@ -12,6 +12,4 @@ class CustomButtons {
       icon: Icon(icon, color: color, size: size),
     );
   }
-
-  
 }
